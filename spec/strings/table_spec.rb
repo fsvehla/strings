@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'tempfile'
 
 module StripHereDoc
   def strip_heredoc
@@ -120,6 +121,23 @@ describe Strings::Table do
         "Two"   = "Zwei";
         "Three" = "Drei";
       EOS
+    end
+  end
+
+  describe 'Loading from a file' do
+    it 'reads string files, even though they have a BOM' do
+      table = Strings::Table.load_from_file(data_path('History.strings'))
+
+      table['History (Caption)'].should == 'History'
+    end
+
+    it 'writes the string file' do
+      path = Tempfile.new('strings-table-output').path
+
+      table = Strings::Table.load_from_file(data_path('History.strings'))
+      table.write_to_file(path)
+
+      File.binread(path).should == File.binread(data_path('History.strings'))
     end
   end
 end

@@ -3,9 +3,22 @@ require 'set'
 
 module Strings
   class Table
+    BOM = "\xFF\xFE".force_encoding(Encoding::UTF_16LE)
+
+    def self.load_from_file(path)
+      contents = File.open(path, 'rb:UTF-16LE') { |f| f.read }
+
+      # Strip BOM
+      if contents.bytes.take(2) == [255, 254]
+        contents = contents[1..-1]
+      end
+
+      new(contents)
+    end
+
     # The source need to be encoded in an ASCII derivate. UTF-8 is fine.
     def initialize(source)
-      @source = source
+      @source = source.encode(Encoding::UTF_8)
     end
 
     #== Access
@@ -80,6 +93,13 @@ module Strings
       tokens.collect do |token|
         token.dump
       end.join
+    end
+
+    def write_to_file(path)
+      File.open(path, 'wb:UTF-16LE') do |file|
+        file.write(BOM)
+        file.write(dump)
+      end
     end
 
     private
